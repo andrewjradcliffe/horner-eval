@@ -1,7 +1,9 @@
 use num_traits::{MulAdd, Zero};
 
 #[inline]
-pub fn muladd<T: MulAdd + MulAdd<Output = T>>(x: T, a: T, b: T) -> T { x.mul_add(a, b) }
+pub fn muladd<T: MulAdd + MulAdd<Output = T>>(x: T, a: T, b: T) -> T {
+    x.mul_add(a, b)
+}
 
 /// Evaluate the polynomial a_n * x^n + a_n_1 * x^(n-1) + ... + a_1 * x + a_0
 /// via Horner's rule. This macro unrolls what would otherwise be a loop into the
@@ -9,21 +11,30 @@ pub fn muladd<T: MulAdd + MulAdd<Output = T>>(x: T, a: T, b: T) -> T { x.mul_add
 ///
 /// # Examples
 /// ```
+/// use horner_eval::horner;
+///
 /// let x = 2.0_f64;
 ///
-/// assert_eq!(17.0, horner(x, 1.0, 2.0, 3.0));
+/// assert_eq!(17.0, horner!(x, 1.0, 2.0, 3.0));
 /// ```
 #[macro_export]
 macro_rules! horner {
-    ( $x:tt, $a0:tt, $a1:tt ) => {
+    // ( $x:tt, $a0:tt, $a1:tt ) => {
+    //     $crate::muladd($a1, $x, $a0)
+    // };
+    // ( $x:tt, $a0:tt, $( $a1:tt ),+ ) => {
+    //     $crate::muladd( $crate::horner!( $x, $( $a1 ),+ ), $x, $a0 )
+    // };
+    // ( $x:tt, $a0:tt ) => { $a0 }
+    // expr? more permissible...
+    ( $x:expr, $a0:expr, $a1:expr ) => {
         $crate::muladd($a1, $x, $a0)
     };
-    ( $x:tt, $a0:tt, $( $a1:tt ),+ ) => {
+    ( $x:expr, $a0:expr, $( $a1:expr ),+ ) => {
         $crate::muladd( $crate::horner!( $x, $( $a1 ),+ ), $x, $a0 )
     };
-    ( $x:tt, $a0:tt ) => { $a0 }
+    ( $x:expr, $a0:expr ) => { $a0 }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -74,18 +85,18 @@ mod tests {
     // Several ways to express
     fn horner_eval<T>(x: T, coefficients: &[T]) -> T
     where
-        T: Copy + Zero + MulAdd + MulAdd<Output = T>
+        T: Copy + Zero + MulAdd + MulAdd<Output = T>,
     {
         let mut result = T::zero();
         let n = coefficients.len();
         for i in 0..n {
             result = result.mul_add(x, coefficients[n - i - 1]);
-        };
+        }
         result
     }
     fn horner_eval2<T>(x: T, coefficients: &[T]) -> T
     where
-        T: Copy + Zero + MulAdd + MulAdd<Output = T>
+        T: Copy + Zero + MulAdd + MulAdd<Output = T>,
     {
         // coefficients
         //     .iter()
@@ -99,20 +110,19 @@ mod tests {
 
     fn horner_eval3<T>(x: T, coefficients: &[T]) -> T
     where
-        T: Copy + MulAdd + MulAdd<Output = T>
+        T: Copy + MulAdd + MulAdd<Output = T>,
     {
         let n = coefficients.len();
-        let a_n = coefficients[n-1];
+        let a_n = coefficients[n - 1];
         // coefficients[0..n-1]
         //     .iter()
         //     .rev()
         //     .fold(a_n, |result, &a| result.mul_add(x, a))
         // Equivalent to:
-        coefficients[0..n-1]
+        coefficients[0..n - 1]
             .iter()
             .rfold(a_n, |result, &a| result.mul_add(x, a))
     }
-
 
     #[test]
     fn internal_horner_eval() {
@@ -185,5 +195,4 @@ mod tests {
     // fn horner_expr() {
     //     let
     // }
-
 }
