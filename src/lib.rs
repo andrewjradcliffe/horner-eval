@@ -21,10 +21,9 @@ pub fn muladd<T: MulAdd + MulAdd<Output = T>>(x: T, a: T, b: T) -> T {
 //     T::zero()
 // }
 
-/// Evaluate the polynomial `aⁿxⁿ + aₙ₋₁xⁿ⁻¹ + ⋯ + a₁x + a₀`
-/// via Horner's rule. This macro unrolls what would otherwise be a loop into the
+/// Evaluate the polynomial `a₀ + a₁x + ⋯ + aₙ₋₁xⁿ⁻¹ + aⁿxⁿ` via Horner's rule.
+/// This macro unrolls what would otherwise be a loop into the
 /// expression `(⋯(aₙx + aₙ₋₁)x + ⋯ + a₁)x + a₀`.
-/// Arbitrary expressions are permitted for the coefficients.
 ///
 /// # Examples
 /// ```
@@ -32,10 +31,15 @@ pub fn muladd<T: MulAdd + MulAdd<Output = T>>(x: T, a: T, b: T) -> T {
 ///
 /// let x = 2.0_f64;
 ///
-/// assert_eq!(17.0, horner!(x, 1.0, 2.0, 3.0));
+/// let (a0, a1, a2) = (1.0, 2.0, 3.0);
 ///
+/// // Coefficients are given in ascending order by power of `x`.
+/// assert_eq!(17.0, horner!(x, a0, a1, a2));
+///
+/// // Arbitrary expressions are permitted for the coefficients.
 /// assert_eq!(53.5, horner!(x + 5.0, x - 1.0, 2.0 * x, x / 4.0));
 ///
+/// // Works on any type which implements `num_traits::MulAdd`
 /// assert_eq!(79, horner!(2, 1, 3, 0, 5, 0, 1));
 /// ```
 #[macro_export]
@@ -58,8 +62,8 @@ macro_rules! horner {
     // ( $x:expr ) => { __zero($x) }
 }
 
-/// Evaluate the polynomial `aⁿxⁿ + aₙ₋₁xⁿ⁻¹ + ⋯ + a₁x + a₀`
-/// via Horner's rule. As the name indicates, this function uses an explicit loop
+/// Evaluate the polynomial `a₀ + a₁x + ⋯ + aₙ₋₁xⁿ⁻¹ + aⁿxⁿ` via Horner's rule.
+/// As the name indicates, this function uses an explicit loop
 /// to accommodate dynamically-sized coefficient slices.
 ///
 /// # Examples
