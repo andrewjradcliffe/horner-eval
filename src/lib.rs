@@ -1,14 +1,27 @@
+//! # horner-eval
+//!
+//! A macro for evaluating polynomials via Horner's rule.
+
 use num_traits::MulAdd;
 
+/// Identical to `x.mul_add(a, b)`; used to generate expression nest without
+/// provoking ambiguities which would otherwise arise due to automatic dereferencing.
+///
+/// # Examples
+/// ```
+/// use horner_eval::muladd;
+///
+/// assert_eq!(7.0_f64.mul_add(2.0, 3.0), muladd(7.0, 2.0, 3.0))
+/// ```
 #[inline]
-pub fn __muladd<T: MulAdd + MulAdd<Output = T>>(x: T, a: T, b: T) -> T {
+pub fn muladd<T: MulAdd + MulAdd<Output = T>>(x: T, a: T, b: T) -> T {
     x.mul_add(a, b)
 }
 // pub fn __zero<T: Zero + MulAdd + MulAdd<Output = T>>(x: T) -> T {
 //     T::zero()
 // }
 
-/// Evaluate the polynomial aⁿxⁿ + aₙ₋₁xⁿ⁻¹ + ⋯ + a₁x + a₀
+/// Evaluate the polynomial `aⁿxⁿ + aₙ₋₁xⁿ⁻¹ + ⋯ + a₁x + a₀`
 /// via Horner's rule. This macro unrolls what would otherwise be a loop into the
 /// expression `(⋯(aₙx + aₙ₋₁)x + ⋯ + a₁)x + a₀`.
 /// Arbitrary expressions are permitted for the coefficients.
@@ -28,24 +41,24 @@ pub fn __muladd<T: MulAdd + MulAdd<Output = T>>(x: T, a: T, b: T) -> T {
 #[macro_export]
 macro_rules! horner {
     // ( $x:tt, $a0:tt, $a1:tt ) => {
-    //     $crate::__muladd($a1, $x, $a0)
+    //     $crate::muladd($a1, $x, $a0)
     // };
     // ( $x:tt, $a0:tt, $( $a1:tt ),+ ) => {
-    //     $crate::__muladd( $crate::horner!( $x, $( $a1 ),+ ), $x, $a0 )
+    //     $crate::muladd( $crate::horner!( $x, $( $a1 ),+ ), $x, $a0 )
     // };
     // ( $x:tt, $a0:tt ) => { $a0 }
     // expr? more permissible...
     ( $x:expr, $a0:expr, $a1:expr ) => {
-        $crate::__muladd($a1, $x, $a0)
+        $crate::muladd($a1, $x, $a0)
     };
     ( $x:expr, $a0:expr, $( $a1:expr ),+ ) => {
-        $crate::__muladd( $crate::horner!( $x, $( $a1 ),+ ), $x, $a0 )
+        $crate::muladd( $crate::horner!( $x, $( $a1 ),+ ), $x, $a0 )
     };
     ( $x:expr, $a0:expr ) => { $a0 }
     // ( $x:expr ) => { __zero($x) }
 }
 
-/// Evaluate the polynomial aⁿxⁿ + aₙ₋₁xⁿ⁻¹ + ⋯ + a₁x + a₀
+/// Evaluate the polynomial `aⁿxⁿ + aₙ₋₁xⁿ⁻¹ + ⋯ + a₁x + a₀`
 /// via Horner's rule. As the name indicates, this function uses an explicit loop
 /// to accommodate dynamically-sized coefficient slices.
 ///
@@ -64,10 +77,14 @@ where
     T: Copy + MulAdd + MulAdd<Output = T>,
 {
     let n = coefficients.len();
-    let a_n = coefficients[n - 1];
-    coefficients[0..n - 1]
-        .iter()
-        .rfold(a_n, |result, &a| result.mul_add(x, a))
+    if n > 0 {
+        let a_n = coefficients[n - 1];
+        coefficients[0..n - 1]
+            .iter()
+            .rfold(a_n, |result, &a| result.mul_add(x, a))
+    } else {
+        panic!("coefficients.len() must be greater than or equal to 1, got {}", n);
+    }
 }
 
 
@@ -85,7 +102,7 @@ mod tests {
                         let a: $t = 19;
                         let b: $t = 4;
 
-                        assert_eq!(__muladd(x, a, b), (x * a + b));
+                        assert_eq!(muladd(x, a, b), (x * a + b));
                     }
                 )+
             };
@@ -106,7 +123,7 @@ mod tests {
                         let a: $t = 3.4;
                         let b: $t = 5.6;
 
-                        let abs_difference = (__muladd(x, a, b) - (x * a + b)).abs();
+                        let abs_difference = (muladd(x, a, b) - (x * a + b)).abs();
 
                         assert!(abs_difference <= 46.4 * $t::EPSILON);
                     }
@@ -210,6 +227,14 @@ mod tests {
         }
 
         test_horner_loop_float!(f32 f64);
+    }
+
+    #[test]
+    #[should_panic(expected = "coefficients.len() must be greater than")]
+    fn horner_loop_empty_vec() {
+        let x = 2.0;
+        let c: Vec<f64> = vec![];
+        horner_loop(x, &c);
     }
 
 }
