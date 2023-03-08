@@ -8,7 +8,7 @@ horner-eval = "0.1.0"
 ```
 ## Description
 
-If Horner's rule is appropriate for your polynomial, then, almost assuredly, you want to unroll
+If [Horner's rule](https://en.wikipedia.org/wiki/Horner%27s_method) is appropriate for your polynomial, then, almost assuredly, you want to unroll
 the loop. The `horner!` macro provided by this crate does just that.
 
 ## License
