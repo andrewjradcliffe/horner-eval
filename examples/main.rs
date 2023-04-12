@@ -29,11 +29,23 @@ fn main() {
         None => 2.0,
     };
     // println!("{}", horner!(x2, y, z, w));
-    println!("{}", evalpoly(x2 + 7.777771908, y, z, w, 7.7, 8.8, 9.9, 11.1));
+    println!(
+        "{}",
+        evalpoly(x2 + 7.777771908, y, z, w, 7.7, 8.8, 9.9, 11.1)
+    );
 }
 
 // For inspecting assembly
 #[inline(never)]
-pub fn evalpoly<T: MulAdd + MulAdd<Output = T> + Copy>(x: T, a0: T, a1: T, a2: T, a3: T, a4: T, a5: T, a6: T) -> T {
+pub fn evalpoly<T: MulAdd + MulAdd<Output = T> + Copy>(
+    x: T,
+    a0: T,
+    a1: T,
+    a2: T,
+    a3: T,
+    a4: T,
+    a5: T,
+    a6: T,
+) -> T {
     horner!(x, a0, a1, a2, a3, a4, a5, a6)
 }

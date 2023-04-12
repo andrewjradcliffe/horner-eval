@@ -87,10 +87,12 @@ where
             .iter()
             .rfold(a_n, |result, &a| result.mul_add(x, a))
     } else {
-        panic!("coefficients.len() must be greater than or equal to 1, got {}", n);
+        panic!(
+            "coefficients.len() must be greater than or equal to 1, got {}",
+            n
+        );
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -240,5 +242,4 @@ mod tests {
         let c: Vec<f64> = vec![];
         horner_loop(x, &c);
     }
-
 }
